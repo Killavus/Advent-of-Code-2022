@@ -87,3 +87,18 @@ fn main() {
         most_calories_k_elves_carry(BufReader::new(stdin()), 3).expect("input should be valid")
     )
 }
+
+// Quick & dirty solution with log(n) added in & whole file in memory:
+// fn main() {
+//     let mut input = String::new();
+//     stdin().read_to_string(&mut input).ok();
+//     let mut elves = input.lines().fold(vec![0], |mut acc, l| {
+//         l.trim().parse::<usize>()
+//             .map(|v| *acc.last_mut().unwrap() += v)
+//             .map_err(|_| acc.push(0))
+//             .ok();
+//         acc
+//     });
+//     elves.sort_unstable();
+//     println!("{} {}", elves.last().unwrap(), elves.iter().rev().take(3).sum::<usize>());
+// }
