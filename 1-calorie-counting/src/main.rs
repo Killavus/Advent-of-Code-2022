@@ -45,10 +45,6 @@ impl Iterator for ElfCarryIter {
     }
 }
 
-fn most_calories_elf_carry(reader: impl BufRead + 'static) -> AppResult<usize> {
-    Ok(ElfCarryIter::new(reader).max().expect("input is valid"))
-}
-
 fn most_calories_k_elves_carry(reader: impl BufRead + 'static, k: usize) -> AppResult<usize> {
     let iter = ElfCarryIter::new(reader);
     let mut result = Vec::with_capacity(k);
@@ -82,10 +78,10 @@ fn most_calories_k_elves_carry(reader: impl BufRead + 'static, k: usize) -> AppR
 }
 
 fn main() {
-    //let most_calories_elf_carry =
-    //    most_calories_elf_carry(BufReader::new(stdin())).expect("input should be valid");
-
-    // println!("Elf carry at most {} calories", most_calories_elf_carry);
+    // println!(
+    //     "Elf carry at most {} calories",
+    //     most_calories_k_elves_carry(BufReader::new(stdin()), 1).expect("input should be valid")
+    // );
     println!(
         "Three elves carry at most {} calories",
         most_calories_k_elves_carry(BufReader::new(stdin()), 3).expect("input should be valid")
