@@ -30,6 +30,6 @@ cargo run --bin rock-paper-scissors --release < 2-rock-paper-scissors/input
 
 # Or in PowerShell:
 
-Get-Content ./input | cargo run --release
-Get-Content ./2-rock-paper-scissors/input | cargo run --bin rock-paper-scissors --release
+Get-Content .\input | cargo run --release
+Get-Content .\2-rock-paper-scissors\input | cargo run --bin rock-paper-scissors --release
 ```
