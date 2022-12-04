@@ -27,6 +27,16 @@ impl Pair {
     fn fully_contains(&self, other: &Self) -> bool {
         self.0 <= other.0 && self.1 >= other.1
     }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        let range = self.0..=self.1;
+        let other_range = other.0..=other.1;
+
+        range.contains(other_range.start())
+            || range.contains(other_range.end())
+            || other_range.contains(range.start())
+            || other_range.contains(range.end())
+    }
 }
 
 impl FromStr for Assignment {
@@ -42,27 +52,31 @@ impl FromStr for Assignment {
     }
 }
 
-fn overlapping_pairs(reader: impl BufRead) -> AppResult<usize> {
+fn overlapping_assignments(reader: impl BufRead) -> AppResult<(usize, usize)> {
+    let mut fully_overlapping = 0;
     let mut overlapping = 0;
 
     for line in reader.lines() {
         let assignment = line?.parse::<Assignment>()?;
 
-        overlapping += usize::from(
+        fully_overlapping += usize::from(
             assignment.first.fully_contains(&assignment.second)
                 || assignment.second.fully_contains(&assignment.first),
         );
+        overlapping += usize::from(assignment.first.overlaps(&assignment.second));
     }
 
-    Ok(overlapping)
+    Ok((fully_overlapping, overlapping))
 }
 
 fn main() -> AppResult<()> {
-    let overlaps = overlapping_pairs(BufReader::new(stdin()))?;
+    let (full_overlaps, overlaps) = overlapping_assignments(BufReader::new(stdin()))?;
     println!(
         "There are {} full overlaps between elf assignments",
-        overlaps
+        full_overlaps
     );
+
+    println!("There are {} overlaps between elf assignments", overlaps);
 
     Ok(())
 }
