@@ -1,12 +1,13 @@
 use std::{
     io::{prelude::*, stdin, BufReader},
+    ops::RangeInclusive,
     str::FromStr,
 };
 
 type AppResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
-struct Pair(u64, u64);
+struct Pair(RangeInclusive<u64>);
 
 #[derive(Debug)]
 struct Assignment {
@@ -19,23 +20,21 @@ impl FromStr for Pair {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let pair = s.split('-').collect::<Vec<_>>();
-        Ok(Self(pair[0].parse()?, pair[1].parse()?))
+        Ok(Self(pair[0].parse()?..=pair[1].parse()?))
     }
 }
 
 impl Pair {
     fn fully_contains(&self, other: &Self) -> bool {
-        self.0 <= other.0 && self.1 >= other.1
+        (self.0.contains(other.0.start()) && self.0.contains(other.0.end()))
+            || (other.0.contains(self.0.start()) && other.0.contains(self.0.end()))
     }
 
     fn overlaps(&self, other: &Self) -> bool {
-        let range = self.0..=self.1;
-        let other_range = other.0..=other.1;
-
-        range.contains(other_range.start())
-            || range.contains(other_range.end())
-            || other_range.contains(range.start())
-            || other_range.contains(range.end())
+        self.0.contains(other.0.start())
+            || self.0.contains(other.0.end())
+            || other.0.contains(self.0.start())
+            || other.0.contains(self.0.end())
     }
 }
 
@@ -59,10 +58,7 @@ fn overlapping_assignments(reader: impl BufRead) -> AppResult<(usize, usize)> {
     for line in reader.lines() {
         let assignment = line?.parse::<Assignment>()?;
 
-        fully_overlapping += usize::from(
-            assignment.first.fully_contains(&assignment.second)
-                || assignment.second.fully_contains(&assignment.first),
-        );
+        fully_overlapping += usize::from(assignment.first.fully_contains(&assignment.second));
         overlapping += usize::from(assignment.first.overlaps(&assignment.second));
     }
 
