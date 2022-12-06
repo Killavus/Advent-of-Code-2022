@@ -1,5 +1,4 @@
 use anyhow::Result;
-use std::collections::HashSet;
 use std::io::{stdin, BufRead, BufReader};
 
 fn read(mut reader: impl BufRead) -> Result<String> {
@@ -11,7 +10,11 @@ fn read(mut reader: impl BufRead) -> Result<String> {
 
 fn find_all_unique_piece(packet: &str, piece_len: usize) -> Option<usize> {
     for (idx, maybe_prelude) in packet.as_bytes().windows(piece_len).enumerate() {
-        if maybe_prelude.iter().copied().collect::<HashSet<_>>().len() == piece_len {
+        let is_prelude = !(0..piece_len)
+            .into_iter()
+            .any(|idx| maybe_prelude[..idx].contains(&maybe_prelude[idx]));
+
+        if is_prelude {
             return Some(idx + piece_len);
         }
     }
