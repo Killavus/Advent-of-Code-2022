@@ -9,12 +9,12 @@ fn read(mut reader: impl BufRead) -> Result<String> {
 }
 
 fn find_all_unique_piece(packet: &str, piece_len: usize) -> Option<usize> {
-    for (idx, maybe_prelude) in packet.as_bytes().windows(piece_len).enumerate() {
-        let is_prelude = !(0..piece_len)
+    for (idx, maybe_unique) in packet.as_bytes().windows(piece_len).enumerate() {
+        let is_unique = !(0..piece_len)
             .into_iter()
-            .any(|idx| maybe_prelude[..idx].contains(&maybe_prelude[idx]));
+            .any(|idx| maybe_unique[..idx].contains(&maybe_unique[idx]));
 
-        if is_prelude {
+        if is_unique {
             return Some(idx + piece_len);
         }
     }
