@@ -14,13 +14,6 @@ impl FileSystemNode {
         matches!(self, FileSystemNode::Dir(_, _, _))
     }
 
-    fn name(&self) -> &str {
-        match self {
-            FileSystemNode::File(name, ..) => name,
-            FileSystemNode::Dir(name, ..) => name,
-        }
-    }
-
     fn contents(&self) -> Option<&Vec<usize>> {
         if let FileSystemNode::Dir(_, contents, _) = self {
             Some(contents)
