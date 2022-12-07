@@ -279,7 +279,7 @@ fn main() -> Result<()> {
         .copied()
         .filter(|size| total_used.saturating_sub(*size) <= 40000000)
         .min()
-        .unwrap();
+        .ok_or_else(|| anyhow!("failed to find a directory matching conditions"))?;
 
     println!(
         "Total sum of directories with more than 100000 bytes is {}",
