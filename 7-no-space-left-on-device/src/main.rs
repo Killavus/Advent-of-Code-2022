@@ -14,6 +14,13 @@ impl FileSystemNode {
         matches!(self, FileSystemNode::Dir(_, _, _))
     }
 
+    fn name(&self) -> &str {
+        match self {
+            FileSystemNode::Dir(dname, ..) => dname,
+            FileSystemNode::File(fname, ..) => fname,
+        }
+    }
+
     fn contents(&self) -> Option<&Vec<usize>> {
         if let FileSystemNode::Dir(_, contents, _) = self {
             Some(contents)
@@ -22,12 +29,30 @@ impl FileSystemNode {
         }
     }
 
-    fn contents_mut(&mut self) -> Option<&mut Vec<usize>> {
-        if let FileSystemNode::Dir(_, contents, _) = self {
-            Some(contents)
-        } else {
-            None
+    fn add_inode(&mut self, inode: usize) {
+        if let FileSystemNode::Dir(_, contents, ..) = self {
+            contents.push(inode);
         }
+    }
+}
+
+impl FileSystem {
+    fn get(&self, inode: usize) -> Option<&FileSystemNode> {
+        self.0.get(inode)
+    }
+
+    fn get_mut(&mut self, inode: usize) -> Option<&mut FileSystemNode> {
+        self.0.get_mut(inode)
+    }
+
+    fn children(&self, inode: usize) -> Option<impl Iterator<Item = (usize, &FileSystemNode)>> {
+        self.get(inode)
+            .and_then(FileSystemNode::contents)
+            .map(|contents| {
+                contents
+                    .iter()
+                    .map(|child_inode| (*child_inode, &self.0[*child_inode]))
+            })
     }
 }
 
@@ -65,7 +90,6 @@ impl FileSystemBuilder {
 
     fn cwd_dir(&self) -> Result<&FileSystemNode> {
         self.fs
-            .0
             .get(self.cwd)
             .ok_or_else(|| anyhow!("cwd is wrong, invalid index"))
             .and_then(|node| {
@@ -77,7 +101,6 @@ impl FileSystemBuilder {
 
     fn cwd_dir_mut(&mut self) -> Result<&mut FileSystemNode> {
         self.fs
-            .0
             .get_mut(self.cwd)
             .ok_or_else(|| anyhow!("cwd is wrong, invalid index"))
             .and_then(|node| {
@@ -96,17 +119,14 @@ impl FileSystemBuilder {
     }
 
     fn find_or_create_dir(&mut self, inner: &str) -> Result<usize> {
-        match self.find_dir(inner)? {
+        match self.find_node(inner)? {
             Some(inode) => Ok(inode),
             None => {
                 let new_inode = self.fs.0.len();
                 self.fs
                     .0
                     .push(FileSystemNode::Dir(inner.to_owned(), vec![], self.cwd));
-                self.cwd_dir_mut()?
-                    .contents_mut()
-                    .into_iter()
-                    .for_each(|contents| contents.push(new_inode));
+                self.cwd_dir_mut()?.add_inode(new_inode);
                 Ok(new_inode)
             }
         }
@@ -128,50 +148,23 @@ impl FileSystemBuilder {
         Ok(())
     }
 
-    fn find_dir(&self, name: &str) -> Result<Option<usize>> {
+    fn find_node(&self, name: &str) -> Result<Option<usize>> {
         Ok(self
-            .cwd_dir()?
-            .contents()
+            .fs
+            .children(self.cwd)
             .into_iter()
-            .flat_map(|contents| {
-                contents
-                    .iter()
-                    .copied()
-                    .find(|inode| match &self.fs.0[*inode] {
-                        FileSystemNode::Dir(dname, ..) => dname == name,
-                        _ => false,
-                    })
-            })
-            .next())
-    }
-
-    fn find_file(&self, name: &str) -> Result<Option<usize>> {
-        Ok(self
-            .cwd_dir()?
-            .contents()
-            .into_iter()
-            .flat_map(|contents| {
-                contents
-                    .iter()
-                    .copied()
-                    .find(|inode| match &self.fs.0[*inode] {
-                        FileSystemNode::File(fname, ..) => fname == name,
-                        _ => false,
-                    })
-            })
-            .next())
+            .flatten()
+            .find(|(_, node)| node.name() == name)
+            .map(|(inode, _)| inode))
     }
 
     fn append_file(&mut self, name: String, size: usize) -> Result<usize> {
-        match self.find_file(&name)? {
+        match self.find_node(&name)? {
             Some(inode) => Ok(inode),
             None => {
                 let new_inode = self.fs.0.len();
                 self.fs.0.push(FileSystemNode::File(name, size));
-                self.cwd_dir_mut()?
-                    .contents_mut()
-                    .into_iter()
-                    .for_each(|contents| contents.push(new_inode));
+                self.cwd_dir_mut()?.add_inode(new_inode);
                 Ok(new_inode)
             }
         }
@@ -227,27 +220,29 @@ fn read(reader: impl BufRead) -> Result<FileSystem> {
     Ok(fs.build())
 }
 
-fn dir_sizes(fs: &FileSystem) -> Vec<usize> {
+fn dir_sizes(fs: &FileSystem) -> Result<Vec<usize>> {
     let mut stack = vec![(0, 0, 0)];
     let mut result = vec![];
     let mut last_parent = usize::MAX;
 
     while !stack.is_empty() {
         let idx = stack.len() - 1;
-        let (current, _, parent_idx) = stack.last().copied().unwrap();
+        let (current, _, parent_idx) = stack.last_mut().copied().unwrap();
+        let coming_back = last_parent == current;
 
-        if last_parent != current {
-            if let Some(contents) = fs.0[current].contents() {
-                use FileSystemNode::*;
+        if !coming_back {
+            use FileSystemNode::*;
 
-                for inode in contents.iter().copied() {
-                    match &fs.0[inode] {
-                        File(_, size) => {
-                            stack[idx].1 += *size;
-                        }
-                        Dir(..) => {
-                            stack.push((inode, 0, idx));
-                        }
+            for (inode, child) in fs
+                .children(current)
+                .ok_or_else(|| anyhow!("attempt to traverse non-dir inode: {}", current))?
+            {
+                match child {
+                    File(_, size) => {
+                        stack[idx].1 += size;
+                    }
+                    Dir(..) => {
+                        stack.push((inode, 0, idx));
                     }
                 }
             }
@@ -264,13 +259,13 @@ fn dir_sizes(fs: &FileSystem) -> Vec<usize> {
         }
     }
 
-    result
+    Ok(result)
 }
 
 fn main() -> Result<()> {
     let fs = read(BufReader::new(stdin()))?;
 
-    let sizes = dir_sizes(&fs);
+    let sizes = dir_sizes(&fs)?;
 
     let at_most_100000_sum = sizes
         .iter()
