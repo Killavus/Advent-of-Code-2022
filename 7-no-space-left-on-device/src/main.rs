@@ -227,6 +227,7 @@ fn dir_sizes(fs: &FileSystem) -> Result<Vec<usize>> {
 
     while !stack.is_empty() {
         let idx = stack.len() - 1;
+        // PANIC: We've just checked that stack is empty.
         let (current, _, parent_idx) = stack.last_mut().copied().unwrap();
         let coming_back = last_parent == current;
 
@@ -248,7 +249,6 @@ fn dir_sizes(fs: &FileSystem) -> Result<Vec<usize>> {
             }
         }
 
-        // We've finished processing the node.
         if stack.last().unwrap().0 == current {
             result.push(stack[idx].1);
             stack[parent_idx].1 += stack[idx].1;
@@ -273,7 +273,12 @@ fn main() -> Result<()> {
         .filter(|size| *size <= 100000)
         .sum::<usize>();
 
-    let total_used = sizes.iter().copied().max().unwrap();
+    let total_used = sizes
+        .iter()
+        .copied()
+        .max()
+        .ok_or_else(|| anyhow!("expected at least one directory in input"))?;
+
     let minimum_directory = sizes
         .iter()
         .copied()
