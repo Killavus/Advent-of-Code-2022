@@ -57,16 +57,16 @@ struct Point {
     y: isize,
 }
 
-struct Knot {
+struct Rope {
     head: Point,
-    tail: Point,
+    tails: Vec<Point>,
 }
 
-impl Knot {
-    fn new() -> Self {
+impl Rope {
+    fn new(tail_count: usize) -> Self {
         Self {
             head: Point { x: 0, y: 0 },
-            tail: Point { x: 0, y: 0 },
+            tails: vec![Point { x: 0, y: 0 }; tail_count],
         }
     }
 
@@ -88,26 +88,25 @@ impl Knot {
             }
         }
 
-        self.adjust_tail()
+        self.adjust_tails()
     }
 
-    fn adjust_tail(&mut self) {
-        let needs_adjustment = ![1, 0, -1]
-            .into_iter()
-            .flat_map(|x| [1, 0, -1].into_iter().map(move |y| (x, y)))
-            .any(|(dx, dy)| self.head.x + dx == self.tail.x && self.head.y + dy == self.tail.y);
-
-        if needs_adjustment {
-            let (adjx, adjy) = self.tail_adjustment();
-
-            self.tail.x += adjx;
-            self.tail.y += adjy;
-        }
+    fn adjust_tails(&mut self) {
+        self.tails.iter_mut().fold(&self.head, |head, tail| {
+            tail.adjust(head);
+            tail
+        });
     }
 
-    fn tail_adjustment(&self) -> (isize, isize) {
-        let (tx, ty) = (self.tail.x, self.tail.y);
-        let (hx, hy) = (self.head.x, self.head.y);
+    fn tails(&self) -> impl Iterator<Item = Point> + '_ {
+        self.tails.iter().copied()
+    }
+}
+
+impl Point {
+    fn adjustment(&self, head: &Self) -> (isize, isize) {
+        let (tx, ty) = (self.x, self.y);
+        let (hx, hy) = (head.x, head.y);
 
         (
             match tx.cmp(&hx) {
@@ -122,22 +121,52 @@ impl Knot {
             },
         )
     }
+
+    fn adjust(&mut self, head: &Self) {
+        let needs_adjustment = ![1, 0, -1]
+            .into_iter()
+            .flat_map(|x| [1, 0, -1].into_iter().map(move |y| (x, y)))
+            .any(|(dx, dy)| head.x + dx == self.x && head.y + dy == self.y);
+
+        if needs_adjustment {
+            let (adjx, adjy) = self.adjustment(head);
+
+            self.x += adjx;
+            self.y += adjy;
+        }
+    }
 }
 
 fn main() -> Result<()> {
     let mut set = HashSet::from([Point { x: 0, y: 0 }]);
+    let mut bigger_set: HashSet<Point> = HashSet::from([Point { x: 0, y: 0 }]);
+    let mut rope = Rope::new(1);
+    let mut bigger_rope = Rope::new(9);
 
-    let mut knot = Knot::new();
     for move_cmd in read(BufReader::new(stdin())) {
         let Move(direction, step) = move_cmd?;
 
         (0..step).for_each(|_| {
-            knot.step(&direction);
-            set.insert(knot.tail);
+            rope.step(&direction);
+            rope.tails().for_each(|tail| {
+                set.insert(tail);
+            });
+
+            bigger_rope.step(&direction);
+            bigger_rope.tails().last().into_iter().for_each(|tail| {
+                bigger_set.insert(tail);
+            })
         })
     }
 
-    println!("Knot tail was in {} unique positions", set.len());
+    println!(
+        "In small rope, knot tail was in {} unique positions",
+        set.len()
+    );
+    println!(
+        "In bigger rope, knot tail were in {} unique positions",
+        bigger_set.len()
+    );
 
     Ok(())
 }
