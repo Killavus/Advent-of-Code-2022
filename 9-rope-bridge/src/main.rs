@@ -98,8 +98,8 @@ impl Rope {
         });
     }
 
-    fn tails(&self) -> impl Iterator<Item = Point> + '_ {
-        self.tails.iter().copied()
+    fn final_tail(&self) -> Option<Point> {
+        self.tails.last().copied()
     }
 }
 
@@ -148,12 +148,12 @@ fn main() -> Result<()> {
 
         (0..step).for_each(|_| {
             rope.step(&direction);
-            rope.tails().for_each(|tail| {
+            rope.final_tail().into_iter().for_each(|tail| {
                 set.insert(tail);
             });
 
             bigger_rope.step(&direction);
-            bigger_rope.tails().last().into_iter().for_each(|tail| {
+            bigger_rope.final_tail().into_iter().for_each(|tail| {
                 bigger_set.insert(tail);
             })
         })
