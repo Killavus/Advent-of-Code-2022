@@ -7,5 +7,6 @@ members = [
     "5-supply-stacks",
     "6-tuning-trouble",
     "7-no-space-left-on-device",
-    "8-treetop-tree-house"
+    "8-treetop-tree-house",
+    "9-rope-bridge"
 ]
