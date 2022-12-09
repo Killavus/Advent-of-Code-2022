@@ -164,7 +164,7 @@ fn main() -> Result<()> {
         set.len()
     );
     println!(
-        "In bigger rope, knot tail were in {} unique positions",
+        "In bigger rope, knot tail was in {} unique positions",
         bigger_set.len()
     );
 
