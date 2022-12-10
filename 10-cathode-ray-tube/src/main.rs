@@ -49,7 +49,7 @@ enum CPUState {
     Idle,
 }
 
-struct CPU {
+struct Cpu {
     x: i64,
     state: CPUState,
     cycle: usize,
@@ -64,7 +64,7 @@ impl Instruction {
     }
 }
 
-impl CPU {
+impl Cpu {
     fn new() -> Self {
         Self {
             x: 1,
@@ -131,23 +131,37 @@ fn read(reader: impl BufRead) -> impl Iterator<Item = Result<Instruction>> {
 fn main() -> Result<()> {
     let mut instructions = read(BufReader::new(stdin()));
     let mut signal_strength = 0;
-    let mut cpu = CPU::new();
+    let mut cpu = Cpu::new();
     let probing_signal_strength_at = &[20, 60, 100, 140, 180, 220];
 
-    while cpu.current_cycle() < 220 {
+    let mut crt_position = 0;
+
+    loop {
         if cpu.idle() {
-            match instructions.next() {
-                Some(instruction) => cpu.load_instruction(instruction?)?,
-                None => {
-                    break;
-                }
-            };
+            if let Some(instruction) = instructions.next() {
+                cpu.load_instruction(instruction?)?;
+            }
         }
 
+        if (cpu.x() - 1..=cpu.x() + 1).contains(&crt_position) {
+            print!("#")
+        } else {
+            print!(".")
+        }
         cpu.tick();
+        crt_position += 1;
+
+        if crt_position > 39 {
+            crt_position = 0;
+            println!();
+        }
 
         if probing_signal_strength_at.contains(&cpu.current_cycle()) {
             signal_strength += (cpu.current_cycle() as i64) * cpu.x();
+        }
+
+        if cpu.current_cycle() == 241 {
+            break;
         }
     }
 
