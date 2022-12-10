@@ -144,9 +144,9 @@ fn main() -> Result<()> {
         }
 
         if (cpu.x() - 1..=cpu.x() + 1).contains(&crt_position) {
-            print!("#")
+            print!("█")
         } else {
-            print!(".")
+            print!(" ")
         }
         cpu.tick();
         crt_position += 1;
