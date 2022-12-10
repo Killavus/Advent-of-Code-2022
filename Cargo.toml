@@ -8,5 +8,6 @@ members = [
     "6-tuning-trouble",
     "7-no-space-left-on-device",
     "8-treetop-tree-house",
-    "9-rope-bridge"
+    "9-rope-bridge",
+    "10-cathode-ray-tube"
 ]

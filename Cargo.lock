@@ -17,6 +17,14 @@ name = "camp-cleanup"
 version = "0.1.0"
 
 [[package]]
+name = "cathode-ray-tube"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "nom",
+]
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
