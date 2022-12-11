@@ -108,7 +108,23 @@ fn process(old: u64, (op, arg): (Operation, Operand)) -> u64 {
     }
 }
 
-fn play_round(monkeys: &mut [Monkey], inspections: &mut [usize]) {
+fn process_mod(old: u64, (op, arg): (Operation, Operand), p: u64) -> u64 {
+    use Operand::*;
+    use Operation::*;
+    let operand = match arg {
+        Constant(value) => value,
+        Old => old,
+    };
+
+    match op {
+        Multiply => ((old % p) * (operand % p)) % p,
+        Add => ((old % p) + (operand % p)) % p,
+    }
+}
+
+fn play_round(monkeys: &mut [Monkey], inspections: &mut [usize], worry_level_stable: bool) {
+    let monkey_mod: u64 = monkeys.iter().map(|m| m.test).product();
+
     for idx in 0..monkeys.len() {
         let monkey = monkeys[idx].clone();
         monkeys[idx].items.truncate(0);
@@ -118,8 +134,15 @@ fn play_round(monkeys: &mut [Monkey], inspections: &mut [usize]) {
             .items
             .into_iter()
             .map(|item| {
-                let item = process(item, monkey.operation) / 3;
-                if item % monkey.test == 0 {
+                let item = if worry_level_stable {
+                    process_mod(item, monkey.operation, monkey_mod)
+                } else {
+                    process(item, monkey.operation) / 3
+                };
+
+                let test_result = item % monkey.test;
+
+                if test_result == 0 {
                     (item, monkey.throw_if_true)
                 } else {
                     (item, monkey.throw_if_false)
@@ -133,13 +156,30 @@ fn main() -> Result<()> {
     let mut monkeys = read(BufReader::new(stdin()))?;
     let mut inspections = vec![0; monkeys.len()];
 
-    (0..20).for_each(|_| play_round(&mut monkeys, &mut inspections));
-    inspections.sort_unstable_by_key(|&val| Reverse(val));
-    let level_of_monkey_business: usize = inspections[..2].iter().copied().product();
+    {
+        let mut monkeys = monkeys.clone();
+        let mut inspections = inspections.clone();
 
-    println!(
-        "Level of monkey business after 20 rounds is {}",
-        level_of_monkey_business
-    );
+        (0..20).for_each(|_| play_round(&mut monkeys, &mut inspections, false));
+        inspections.sort_unstable_by_key(|&val| Reverse(val));
+        let level_of_monkey_business: usize = inspections[..2].iter().copied().product();
+
+        println!(
+            "Level of monkey business after 20 rounds is {}",
+            level_of_monkey_business
+        );
+    }
+
+    {
+        (0..10000).for_each(|_| play_round(&mut monkeys, &mut inspections, true));
+        inspections.sort_unstable_by_key(|&val| Reverse(val));
+        let level_of_monkey_business: usize = inspections[..2].iter().copied().product();
+
+        println!(
+            "Level of monkey business with you increasingly worried after 10000 rounds is {}",
+            level_of_monkey_business
+        );
+    }
+
     Ok(())
 }
