@@ -9,5 +9,6 @@ members = [
     "7-no-space-left-on-device",
     "8-treetop-tree-house",
     "9-rope-bridge",
-    "10-cathode-ray-tube"
+    "10-cathode-ray-tube",
+    "11-monkey-in-the-middle"
 ]
