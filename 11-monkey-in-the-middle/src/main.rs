@@ -123,7 +123,13 @@ fn process_mod(old: u64, (op, arg): (Operation, Operand), p: u64) -> u64 {
 }
 
 fn play_round(monkeys: &mut [Monkey], inspections: &mut [usize], worry_level_stable: bool) {
-    let monkey_mod: u64 = monkeys.iter().map(|m| m.test).product();
+    let monkey_mod: u64 = if worry_level_stable {
+        // lcm could be taken as well.
+        // if x is divisible by d, it's also divisible by d * e. So we just use modulo product of all divisors. What's more, if x % d = y, then x % d * e = y as well.
+        monkeys.iter().map(|m| m.test).product()
+    } else {
+        1
+    };
 
     for idx in 0..monkeys.len() {
         let monkey = monkeys[idx].clone();
