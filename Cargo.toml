@@ -10,5 +10,6 @@ members = [
     "8-treetop-tree-house",
     "9-rope-bridge",
     "10-cathode-ray-tube",
-    "11-monkey-in-the-middle"
+    "11-monkey-in-the-middle",
+    "12-hill-climbing-algorithm"
 ]
