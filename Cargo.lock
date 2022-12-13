@@ -25,6 +25,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "distress-signal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "nom",
+]
+
+[[package]]
 name = "hill-climbing-algorithm"
 version = "0.1.0"
 dependencies = [
