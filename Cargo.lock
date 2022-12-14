@@ -76,6 +76,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "regolith-reservoir"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "rock-paper-scissors"
 version = "0.1.0"
 
