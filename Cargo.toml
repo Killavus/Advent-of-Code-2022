@@ -14,5 +14,6 @@ members = [
     "12-hill-climbing-algorithm",
     "13-distress-signal",
     "14-regolith-reservoir",
-    "15-beacon-exclusion-zone"
+    "15-beacon-exclusion-zone",
+    "16-proboscidea-volcanium"
 ]
