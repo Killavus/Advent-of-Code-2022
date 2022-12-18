@@ -17,6 +17,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "boiling-boulders"
+version = "0.1.0"
+
+[[package]]
 name = "calorie-counting"
 version = "0.1.0"
 

@@ -16,5 +16,6 @@ members = [
     "14-regolith-reservoir",
     "15-beacon-exclusion-zone",
     "16-proboscidea-volcanium",
-    "17-pyroclastic-flow"
+    "17-pyroclastic-flow",
+    "18-boiling-boulders",
 ]
