@@ -15,5 +15,6 @@ members = [
     "13-distress-signal",
     "14-regolith-reservoir",
     "15-beacon-exclusion-zone",
-    "16-proboscidea-volcanium"
+    "16-proboscidea-volcanium",
+    "17-pyroclastic-flow"
 ]
